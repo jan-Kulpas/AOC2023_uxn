@@ -10,8 +10,6 @@
 
 |0100
 
-%PST { #01 .System/debug DEO }
-
 @on-reset ( -> )
 	;filepath .File/name DEO2 ( set filepath adress )
     #0020 .File/length DEO2	( set read length for dir listing )
@@ -23,7 +21,7 @@
 	;input [ LIT2r 0000 ] 
 	&loop ( -- )
 		process-line
-		[ LITr 00 ] STH ADD2r 
+		[ LITr 00 ] STH ADD2r
 		LDAk ?&loop
 	POP2
 
@@ -37,7 +35,7 @@ BRK
 (
 @|functions )
 
-@process-line ( str* -- (str+line.len)* val )
+@process-line ( str* -- [ str+line.len ]* val )
 	#ff .first-num STZ 
 	&w ( -- )
 		( check if number )
@@ -60,13 +58,18 @@ BRK
 @|helpers )
 
 @is-num ( c -- bool ) DUP #29 GTH SWP #40 LTH AND JMP2r
-( @pline ( str* -- (str+line.len)* )
+
+@pstack ( -- )
+	#01 .System/debug DEO
+JMP2r
+
+@pline ( str* -- [ str+line.len ]* )
 	&w ( -- )
 		LDAk #18 DEO
 		INC2 LDAk #0a EQU
 		?{ LDAk ?&w }
 	LDAk #18 DEO INC2
-	JMP2r )
+	JMP2r
 
 @pstr ( str* -- )
 	&w ( -- )
@@ -90,7 +93,9 @@ BRK
 			INCr }
 		POP2 #000a DIV2 SWPr INCr STHkr ?&w
 	POP2r POP2 POP2 JMP2r
-( @pbool ( bool -- ) ?{ #30 !&print } #31 &print #18 DEO JMP2r )
+
+@pbool ( bool -- ) ?{ #30 !&print } #31 &print #18 DEO JMP2r
+
 @shex ( str* -- val* )
 	[ LIT2r 0000 ]
 	&w ( -- )
@@ -108,5 +113,5 @@ BRK
 (
 @|memory )
 
-@filepath "./aoc/day1/input.txt $1
-@input $8000
+@filepath "./uxn_aoc/day1/input.txt $1
+@input $8000 
