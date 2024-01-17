@@ -5,73 +5,67 @@
 |a0 @File &vector $2 &success $2 &stat $2 &delete $1 &append $1 &name $2 &length $2 &read $2 &write $2
 
 |0000
+
 	@first-num $1
 	@last-num $1
 
 |0100
 
 @on-reset ( -> )
-	;filepath .File/name DEO2 ( set filepath adress )
-    #0020 .File/length DEO2	( set read length for dir listing )
-	;input .File/stat DEO2 ( read dir listing )
-	
-	[ ;input shex ] .File/length DEO2 ( convert file size to a number and set read length )
-	;input .File/read DEO2 ( read file )
-
-	;input [ LIT2r 0000 ] 
+	( set filepath adress ) ;filepath .File/name DEO2
+	( set read length for dir listing ) #0020 .File/length DEO2
+	( read dir listing ) ;input .File/stat DEO2
+	( | convert file size to a number and set read length )
+	[ ;input shex ] .File/length DEO2
+	( read file ) ;input .File/read DEO2
+	;input [ LIT2r 0000 ]
 	&loop ( -- )
-		process-line
-		[ LITr 00 ] STH ADD2r
-		LDAk ?&loop
+		<process-line>
+		[ LITr 00 ] STH
+		ADD2r LDAk ?&loop
 	POP2
-
-	{ "result: 20 $1 } STH2r pstr
-	STH2r pdec ( print result )
-	#0a .Console/write DEO
-
-	#80 .System/state DEO
-BRK
+	( | print result )
+	{ "result: 20 00 }
+	STH2r <pstr>
+	STH2r <pdec>
+	LIT2 0a -Console/write DEO
+	LIT2 80 System/state DEO
+	BRK
 
 (
 @|functions )
 
-@process-line ( str* -- [ str+line.len ]* val )
-	#ff .first-num STZ 
+@<process-line> ( str* -- [ str+line.len ]* val )
+	LIT2 ff -first-num STZ
 	&w ( -- )
-		( check if number )
+		( | check if number )
 		LDAk is-num ?{ !&not-number }
-		
-		LDAk #30 SUB
-		.first-num LDZ #ff NEQ ?{ DUP .first-num STZ }
+		LDAk #30 SUB LIT2 ff -first-num LDZ NEQ ?{ DUP .first-num STZ }
 		.last-num STZ
-
-		( loop if not end line )
-		&not-number
-			INC2 LDAk #0a EQU
-			?{ LDAk ?&w }
-	INC2 
-	( combine numbers for result )
-	.first-num LDZ #0a MUL .last-num LDZ ADD
-	JMP2r 
+		( | loop if not end line )
+		&not-number INC2 LDAk #0a EQU ?{ LDAk ?&w }
+	INC2
+	( | combine numbers for result )
+	LIT2 0a -first-num LDZ MUL .last-num LDZ ADD JMP2r
 
 (
 @|helpers )
 
-@is-num ( c -- bool ) DUP #29 GTH SWP #40 LTH AND JMP2r
+@is-num ( c -- bool )
+	DUP #29 GTH SWP #40 LTH AND JMP2r
 
 @pstack ( -- )
-	#01 .System/debug DEO
-JMP2r
+	LIT2 01 -System/debug DEO
+	JMP2r
 
 @pline ( str* -- [ str+line.len ]* )
 	&w ( -- )
 		LDAk #18 DEO
-		INC2 LDAk #0a EQU
-		?{ LDAk ?&w }
-	LDAk #18 DEO INC2
-	JMP2r
+		INC2 LDAk #0a EQU ?{ LDAk ?&w }
+	LDAk #18 DEO
+	INC2 JMP2r
 
-@pstr ( str* -- )
+@<pstr> ( str* -- )
 	&w ( -- )
 		LDAk #18 DEO
 		INC2 LDAk ?&w
@@ -85,7 +79,7 @@ JMP2r
 		#0f AND DUP #09 GTH #27 MUL ADD [ LIT "0 ] ADD #18 DEO
 		JMP2r
 
-@pdec ( short* -- )
+@<pdec> ( short* -- )
 	#2710 [ LIT2r 00fb ]
 	&w ( -- )
 		DIV2k #000a DIV2k MUL2 SUB2 SWPr EQUk OVR STHkr EQU AND ?{
@@ -94,14 +88,18 @@ JMP2r
 		POP2 #000a DIV2 SWPr INCr STHkr ?&w
 	POP2r POP2 POP2 JMP2r
 
-@pbool ( bool -- ) ?{ #30 !&print } #31 &print #18 DEO JMP2r
+@pbool ( bool -- )
+	?{ #30 !&print }
+	#31 &print #18 DEO
+	JMP2r
 
 @shex ( str* -- val* )
 	[ LIT2r 0000 ]
 	&w ( -- )
 		( validate ) LDAk chex INC #00 EQU ?&end
 		( accumulate ) [ LITr 40 ] SFT2r
-		( combine ) LDAk chex [ LITr 00 ] STH ADD2r
+		( combine ) LDAk chex [ LITr 00 ] STH
+		ADD2r
 		( continue ) INC2 LDAk ?&w
 	&end POP2 STH2r JMP2r
 
@@ -113,5 +111,8 @@ JMP2r
 (
 @|memory )
 
-@filepath "./uxn_aoc/day1/input.txt $1
-@input $8000 
+@filepath
+	"./uxn_aoc/day1/input.txt $1
+
+@input $8000
+
