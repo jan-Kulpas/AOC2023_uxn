@@ -13,7 +13,7 @@
 
 @on-reset ( -> )
 	( set filepath adress ) ;filepath .File/name DEO2
-	( set read length for dir listing ) #0020 .File/length DEO2
+	( set read length for dir listing ) #0004 .File/length DEO2
 	( read dir listing ) ;input .File/stat DEO2
 	( | convert file size to a number and set read length )
 	[ ;input shex ] .File/length DEO2
@@ -29,24 +29,24 @@
 	STH2r <pstr>
 	STH2r <pdec>
 	LIT2 0a -Console/write DEO
-	LIT2 80 System/state DEO
+	#80 .System/state DEO
 	BRK
 
 (
 @|functions )
 
 @<process-line> ( str* -- [ str+line.len ]* val )
-	LIT2 ff -first-num STZ
+	#ff .first-num STZ
 	&w ( -- )
 		( | check if number )
 		LDAk is-num ?{ !&not-number }
-		LDAk #30 SUB LIT2 ff -first-num LDZ NEQ ?{ DUP .first-num STZ }
+		LDAk #30 SUB .first-num LDZ #ff NEQ ?{ DUP .first-num STZ }
 		.last-num STZ
 		( | loop if not end line )
 		&not-number INC2 LDAk #0a EQU ?{ LDAk ?&w }
 	INC2
 	( | combine numbers for result )
-	LIT2 0a -first-num LDZ MUL .last-num LDZ ADD JMP2r
+	.first-num LDZ #0a MUL .last-num LDZ ADD JMP2r
 
 (
 @|helpers )
@@ -55,7 +55,7 @@
 	DUP #29 GTH SWP #40 LTH AND JMP2r
 
 @pstack ( -- )
-	LIT2 01 -System/debug DEO
+	#01 .System/debug DEO
 	JMP2r
 
 @pline ( str* -- [ str+line.len ]* )
