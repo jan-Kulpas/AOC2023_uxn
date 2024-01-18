@@ -1,4 +1,4 @@
-( Advent of Code: Day 1 - first star )
+( Advent of Code: Day 1 - second star )
 
 |00 @System &vector $2 &expansion $2 &wst $1 &rst $1 &metadata $2 &r $2 &g $2 &b $2 &debug $1 &state $1
 |10 @Console &vector $2 &read $1 &pad $4 &type $1 &write $1 &error $1
@@ -21,6 +21,7 @@
 	;input [ LIT2r 0000 ]
 	&loop ( -- )
 		<process-line>
+		#010e DEO
 		[ LITr 00 ] STH
 		ADD2r LDAk ?&loop
 	POP2
@@ -29,32 +30,72 @@
 	STH2r <pstr>
 	STH2r <pdec>
 	LIT2 0a -Console/write DEO
-	LIT2 80 -System/state DEO
+	#80 .System/state DEO
 	BRK
 
 (
 @|functions )
 
-@<process-line> ( str* -- [ str+line.len ]* val )
+@<process-line> ( str* -- str+len* val )
 	#ff .first-num STZ
 	&w ( -- )
 		( | check if number )
-		LDAk is-num ?{ !&not-number }
-		LDAk #30 SUB #ff .first-num LDZ NEQ ?{ DUP .first-num STZ }
+		DUP2k <parse-string>
+		ROT ROT LDA <parse-num>
+		ORA DUP ?{ POP !&not-number }
+		( | save result )
+		.first-num LDZ #ff NEQ ?{ DUP .first-num STZ }
 		.last-num STZ
 		( | loop if not end line )
 		&not-number INC2 LDAk #0a EQU ?{ LDAk ?&w }
 	INC2
 	( | combine numbers for result )
-	#0a .first-num LDZ MUL .last-num LDZ ADD JMP2r
+	.first-num LDZ #0a MUL .last-num LDZ ADD JMP2r
 
 (
 @|helpers )
 
-@is-num ( c -- bool )
+@<parse-num> ( c -- val|0 )
+	DUP is-num ?{ POP #00 JMP2r }
+	#30 SUB JMP2r
+
+@<parse-string> ( str* -- val|0 )
+	( init counter ) DUP2 LITr 01
+	( dict ) {
+		=dict/1 =dict/2 =dict/3 =dict/4 =dict/5 =dict/6 =dict/7 =dict/8 =dict/9 0000 }
+	STH2r
+	( loop )
+	&l ( ___ )
+		( get bstr ) LDA2k
+		( compare ) ROT2 SWP2 scmpnul ?&found
+		( inc pointer ) INC2 INC2
+		( copy astr ) OVR2 SWP2
+		( inc counter ) INCr
+		( check end of dict ) LDAk ?&l
+	POP2 POP2 POP2 POPr #00 JMP2r
+	&found POP2 POP2 STHr JMP2r
+
+@is-num ( c -- f )
 	DUP #29 GTH SWP #40 LTH AND JMP2r
 
-@pline ( str* -- [ str+line.len ]* )
+@scmp ( a* b* -- f )
+	STH2
+	&l ( -- )
+		LDAk ?{
+			&d LDA LDAr STHr EQU JMP2r }
+		LDAk LDAkr STHr NEQ ?&d
+	INC2 INC2r !&l
+
+@scmpnul ( a* bnul* -- f )
+	STH2
+	&l ( -- )
+		LDAkr STHr ?{
+			POP2 POP2r #01 JMP2r }
+		LDAk LDAkr STHr NEQ ?&d
+		INC2 INC2r !&l
+	&d LDA LDAr STHr EQU JMP2r
+
+@<pline> ( str* -- str+len* )
 	&w ( -- )
 		LDAk #18 DEO
 		INC2 LDAk #0a EQU ?{ LDAk ?&w }
@@ -67,10 +108,10 @@
 		INC2 LDAk ?&w
 	POP2 JMP2r
 
-@phex ( short* -- )
-	SWP phex/b
+@<phex> ( short* -- )
+	SWP <phex>/b
 	&b ( -- )
-		DUP #04 SFT phex/c
+		DUP #04 SFT <phex>/c
 	&c ( -- )
 		#0f AND DUP #09 GTH #27 MUL ADD [ LIT "0 ] ADD #18 DEO
 		JMP2r
@@ -109,6 +150,16 @@
 
 @filepath
 	"./uxn_aoc/day1/input.txt $1
+
+@dict &1 "one $1
+	&2 "two $1
+	&3 "three $1
+	&4 "four $1
+	&5 "five $1
+	&6 "six $1
+	&7 "seven $1
+	&8 "eight $1
+	&9 "nine $1
 
 @input $8000
 
